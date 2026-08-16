@@ -47,6 +47,12 @@ jobs:
           tags: |
             type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.ref_name }}
             type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.ref_name }}
+            # The release tag verbatim as well. metadata-action strips the `v`,
+            # so a release called v0.1.0 published only 0.1.0 — every link and
+            # citation naming the release failed to pull. Both forms now
+            # resolve, because guessing which one a registry wanted is not a
+            # thing anyone should have to do.
+            type=raw,value=${{ github.event.inputs.tag || github.ref_name }}
             type=sha,format=short
             # `latest` tracks the newest release, and only a full one: a
             # prerelease that claimed it would silently become the default
