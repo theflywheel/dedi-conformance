@@ -5,13 +5,15 @@ Point it at any DeDi implementation and it reports what that implementation
 conforms to, and what it does not.
 
 ```sh
-docker run --rm -v "$PWD:/work" flywheelai/dedi-conformance \
+docker run --rm -v "$PWD:/work" flywheelai/dedi-conformance:v0.1.0 \
   --manifest /work/dedi-conformance.json
 ```
 
-Published multi-arch (`linux/amd64`, `linux/arm64`) on Docker Hub. Tagged
-`latest` and by commit, so a conformance claim can name the exact suite that
-produced it.
+Published multi-arch (`linux/amd64`, `linux/arm64`) on Docker Hub, one image
+per release. **Pin the version in anything you cite.** A conformance report is
+a claim about an implementation, and it only means something if the suite that
+produced it can be named exactly and fetched again unchanged — `latest` moves
+with each release, so a report against it names a suite that no longer exists.
 
 ```
 DeDi conformance — https://dedi.example.org

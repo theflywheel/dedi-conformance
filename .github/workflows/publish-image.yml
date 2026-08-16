@@ -1,8 +1,21 @@
 name: publish-image
+
+# Releases only, deliberately. A conformance report is a claim about an
+# implementation, and the claim is only meaningful if the suite that produced
+# it can be named exactly and fetched again unchanged. Publishing on every push
+# to main would keep moving `latest` underneath anyone who cited it, so a run
+# from March and a run from June would report against different suites while
+# naming the same image.
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
+  release:
+    types: [published]
+  # Republishing an existing release, e.g. after fixing registry credentials,
+  # without cutting a version that says nothing changed.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build and publish (e.g. v0.1.0)'
+        required: true
 
 jobs:
   publish:
@@ -14,6 +27,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # The tag, not the default branch: on a release event the default
+          # checkout is already the tag, but the dispatch path needs it named.
+          ref: ${{ github.event.inputs.tag || github.ref }}
           submodules: recursive   # the image embeds the pinned spec
 
       - uses: docker/setup-qemu-action@v3
@@ -29,10 +45,13 @@ jobs:
         with:
           images: flywheelai/dedi-conformance
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
+            type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.ref_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.ref_name }}
             type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
+            # `latest` tracks the newest release, and only a full one: a
+            # prerelease that claimed it would silently become the default
+            # image for everyone who did not pin.
+            type=raw,value=latest,enable=${{ github.event.release.prerelease != true }}
 
       - uses: docker/build-push-action@v6
         with:
