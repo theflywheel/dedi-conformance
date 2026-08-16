@@ -42,7 +42,7 @@ func runAgainst(t *testing.T, defects ...mock.Defect) *report.Run {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return New(m, s, 10*time.Second).Execute()
+	return New(m, s, specPath, 10*time.Second).Execute()
 }
 
 // TestAConformantNodePasses is the floor. If this fails, every other test here
@@ -103,6 +103,10 @@ func TestEachDefectIsCaught(t *testing.T) {
 			"a revocation is indistinguishable from never having existed"},
 		{mock.AsOnIgnored, "as_on returns the version",
 			"the directory cannot be asked what it said in the past"},
+		{mock.BadSubscriberType, "type is one the reference schema permits",
+			"a counterparty cannot route on an unrecognised role"},
+		{mock.NoCountries, "reference schema's required fields",
+			"a record missing a required field is served as if complete"},
 	}
 
 	for _, tc := range cases {

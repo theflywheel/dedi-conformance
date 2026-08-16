@@ -23,20 +23,25 @@ import (
 
 // Suite holds everything a run needs.
 type Suite struct {
-	M      *manifest.Manifest
-	Spec   *openapi.Spec
-	Client *http.Client
-	Run    *report.Run
+	M    *manifest.Manifest
+	Spec *openapi.Spec
+	// SpecPath is where Spec was loaded from. The reference registry schemas
+	// sit next to it (../schemas), and cases that check a registry's shape
+	// read them rather than transcribing their contents.
+	SpecPath string
+	Client   *http.Client
+	Run      *report.Run
 }
 
 // New builds a Suite. timeout bounds each individual request: a node that
 // hangs should fail its case, not the whole run.
-func New(m *manifest.Manifest, s *openapi.Spec, timeout time.Duration) *Suite {
+func New(m *manifest.Manifest, s *openapi.Spec, specPath string, timeout time.Duration) *Suite {
 	return &Suite{
-		M:      m,
-		Spec:   s,
-		Client: &http.Client{Timeout: timeout},
-		Run:    &report.Run{BaseURL: m.BaseURL, Profiles: m.Profiles},
+		M:        m,
+		Spec:     s,
+		SpecPath: specPath,
+		Client:   &http.Client{Timeout: timeout},
+		Run:      &report.Run{BaseURL: m.BaseURL, Profiles: m.Profiles},
 	}
 }
 

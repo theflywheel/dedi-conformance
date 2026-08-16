@@ -50,6 +50,13 @@ const (
 	NoErrorCode Defect = "no-error-code"
 	// BadState reports a record state outside the spec's enum.
 	BadState Defect = "bad-state"
+	// BadSubscriberType reports a Beckn subscriber role outside the reference
+	// schema's enum, e.g. "PROVIDER". A counterparty routes on this value, so
+	// an unrecognised role makes the record unusable even when every field is
+	// present.
+	BadSubscriberType Defect = "bad-subscriber-type"
+	// NoCountries omits a field the Beckn_subscriber schema marks required.
+	NoCountries Defect = "no-countries"
 )
 
 // Fixture names this mock serves. They are what a manifest pointed at this
@@ -158,6 +165,14 @@ func (n *node) record(name, version, state string) map[string]any {
 	}
 	if n.has(BadState) {
 		rec["state"] = "decommissioned" // outside the spec's enum
+	}
+	if det, ok := rec["details"].(map[string]any); ok {
+		if n.has(BadSubscriberType) {
+			det["type"] = "PROVIDER" // not one of BAP/BPP/BG/CDS
+		}
+		if n.has(NoCountries) {
+			delete(det, "countries")
+		}
 	}
 	return rec
 }

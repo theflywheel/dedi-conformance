@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/theflywheel/dedi-conformance/manifest"
+	"github.com/theflywheel/dedi-conformance/openapi"
 )
 
 // The beckn profile: the standard's Beckn_subscriber reference registry.
@@ -26,9 +27,15 @@ var becknCases = []namedCase{
 	{"a subscriber's type is one the reference schema permits", caseBecknSubscriberType},
 }
 
-// becknSubscriberRequired mirrors schemas/Beckn_subscriber.json's `required`.
-var becknSubscriberRequired = []string{
-	"subscriber_id", "url", "type", "countries", "domain", "signing_public_key",
+// becknSchema is schemas/Beckn_subscriber.json, read at run time. Nothing
+// about the subscriber shape is transcribed into this file: see
+// openapi.JSONSchema for why a hand-copied enum is a trap.
+func becknSchema(t *T) *openapi.JSONSchema {
+	s, err := openapi.LoadJSONSchema(t.s.SpecPath, "Beckn_subscriber.json")
+	if err != nil {
+		t.Skipf("%v", err)
+	}
+	return s
 }
 
 // subscriberDetails pulls the record's payload. The read API nests the
@@ -55,8 +62,9 @@ func subscriberDetails(t *T) map[string]any {
 
 func caseBecknSubscriberShape(t *T) {
 	t.SpecRef("schemas/Beckn_subscriber.json — required")
+	sch := becknSchema(t)
 	d := subscriberDetails(t)
-	for _, f := range becknSubscriberRequired {
+	for _, f := range sch.Required {
 		if _, ok := d[f]; !ok {
 			t.Errorf("the subscriber record has no %q, which the reference schema marks required "+
 				"(got: %s)\nif this record is not a Beckn subscriber, point the record fixture at "+
@@ -70,18 +78,20 @@ func caseBecknSubscriberShape(t *T) {
 	}
 }
 
-var becknSubscriberTypes = []string{"BAP", "BPP", "BG", "BPP_NETWORK", "BAP_NETWORK"}
-
 func caseBecknSubscriberType(t *T) {
-	t.SpecRef("schemas/Beckn_subscriber.json — type")
+	t.SpecRef("schemas/Beckn_subscriber.json — type.enum")
+	types := becknSchema(t).EnumOf("type")
+	if len(types) == 0 {
+		t.Skipf("the reference schema constrains no %q values to check against", "type")
+	}
 	d := subscriberDetails(t)
 	v, ok := d["type"].(string)
 	if !ok {
 		t.Skipf("no %q field to check; reported by the shape case", "type")
 	}
-	if !contains(becknSubscriberTypes, v) {
+	if !contains(types, v) {
 		t.Errorf("subscriber type %q is not one of %v\n"+
 			"a counterparty routes on this value, so an unrecognised role makes the record unusable "+
-			"even though every other field is present", v, becknSubscriberTypes)
+			"even though every other field is present", v, types)
 	}
 }

@@ -94,7 +94,7 @@ func run(manifestPath, specPath, profiles, format, out string, timeout time.Dura
 		return err
 	}
 
-	run := suite.New(m, s, timeout).Execute()
+	run := suite.New(m, s, specPath, timeout).Execute()
 
 	w := os.Stdout
 	if out != "" {

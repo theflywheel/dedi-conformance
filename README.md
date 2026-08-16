@@ -76,7 +76,7 @@ Claiming a profile is what opts its cases in.
 | **core** | The eight read endpoints of `api/openapi.yaml`: paths resolve, the `{message, data}` envelope, documented enum values are accepted, an absent namespace is 404 and not an empty success, errors carry a machine-readable code. |
 | **versioning** | What the OpenAPI document declares parameters for but assigns no meaning to: version history, `as_on` returning the version live at that instant rather than the current one, and a revoked record remaining resolvable with `state: revoked`. |
 | **publication** | `docs/publishing-dedi-files.md`: the signed manifest at the normative well-known path, and the verification its §7.3 makes mandatory — JCS canonicalization, detached JWS, `verification_method` resolving to a declared key, freshness. |
-| **beckn** | The `Beckn_subscriber` reference registry shape. |
+| **beckn** | The `Beckn_subscriber` reference registry shape, read from `schemas/Beckn_subscriber.json` at run time rather than transcribed. |
 
 **publication is the profile that measures conformance most directly**, because
 it is the part of the standard written in MUSTs. The OpenAPI document describes
@@ -121,6 +121,8 @@ the case meant to catch it**:
 | revocation erases the record entirely | *a revoked record is still resolvable* |
 | `as_on` accepted and ignored | *as_on returns the version live at that instant* |
 | errors carry no `code` | *an error response carries a machine-readable code* |
+| subscriber role outside the schema's enum | *a subscriber's type is one the reference schema permits* |
+| subscriber missing a required field | *a subscriber record carries the reference schema's required fields* |
 
 A defect caught only as collateral damage by some other case fails the test too.
 Alongside these: a fully conformant mock must pass, no case may skip against it,
