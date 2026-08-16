@@ -17,9 +17,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/theflywheel/dedi-conformance/internal/manifest"
-	"github.com/theflywheel/dedi-conformance/internal/spec"
-	"github.com/theflywheel/dedi-conformance/internal/suite"
+	"github.com/theflywheel/dedi-conformance/manifest"
+	"github.com/theflywheel/dedi-conformance/openapi"
+	"github.com/theflywheel/dedi-conformance/suite"
 )
 
 // specPathDefault is where the standard lives in the published image. In a
@@ -89,7 +89,7 @@ func run(manifestPath, specPath, profiles, format, out string, timeout time.Dura
 		m.Profiles = kept
 	}
 
-	s, err := spec.LoadSpec(specPath)
+	s, err := openapi.LoadSpec(specPath)
 	if err != nil {
 		return err
 	}

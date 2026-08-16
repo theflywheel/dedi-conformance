@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/theflywheel/dedi-conformance/internal/manifest"
+	"github.com/theflywheel/dedi-conformance/manifest"
 )
 
 // The core profile: the eight read endpoints the standard defines, the

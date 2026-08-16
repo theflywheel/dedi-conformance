@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/theflywheel/dedi-conformance/internal/manifest"
-	"github.com/theflywheel/dedi-conformance/internal/report"
-	"github.com/theflywheel/dedi-conformance/internal/spec"
+	"github.com/theflywheel/dedi-conformance/manifest"
 	"github.com/theflywheel/dedi-conformance/mock"
+	"github.com/theflywheel/dedi-conformance/openapi"
+	"github.com/theflywheel/dedi-conformance/report"
 )
 
-const specPath = "../../spec/api/openapi.yaml"
+const specPath = "../spec/api/openapi.yaml"
 
 // serverProfiles are the profiles the mock node can answer for. Publication is
 // excluded: it verifies a real publisher's well-known over TLS, which is not
@@ -38,7 +38,7 @@ func runAgainst(t *testing.T, defects ...mock.Defect) *report.Run {
 	if err := m.Validate(); err != nil {
 		t.Fatalf("the test's own manifest is invalid: %v", err)
 	}
-	s, err := spec.LoadSpec(specPath)
+	s, err := openapi.LoadSpec(specPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func TestEachDefectIsCaught(t *testing.T) {
 			"failures can only be told apart by parsing prose"},
 		{mock.BadState, "fields a client resolves on",
 			"an undocumented state cannot be interpreted"},
-		{mock.RevokedIs404, "revoked record is still resolvable",
+		{mock.RevokedIsErased, "revoked record is still resolvable",
 			"a revocation is indistinguishable from never having existed"},
 		{mock.AsOnIgnored, "as_on returns the version",
 			"the directory cannot be asked what it said in the past"},

@@ -118,7 +118,7 @@ the case meant to catch it**:
 | record omits resolvable fields | *a record lookup returns the fields a client resolves on* |
 | 400s on a spec-listed enum value | *documented enum values are accepted* |
 | 400s on a contract-valid `version_id` | *a version_id the contract permits is not a bad request* |
-| revocation deletes the record | *a revoked record is still resolvable* |
+| revocation erases the record entirely | *a revoked record is still resolvable* |
 | `as_on` accepted and ignored | *as_on returns the version live at that instant* |
 | errors carry no `code` | *an error response carries a machine-readable code* |
 
@@ -131,6 +131,48 @@ itself — a version-history shape that the spec contradicts, and an `as_on`
 assertion that compared the oldest version against the newest and so failed a
 correct implementation for being correct. Both are fixed, and both are why the
 mock alone is not enough.
+
+## Embedding it in your own tests
+
+If your implementation is in Go, you can skip the container entirely and run
+the suite in-process against an `httptest.Server`. No deployment, no Docker
+layer, and it runs on every `go test`:
+
+```go
+srv := httptest.NewServer(myHandler)          // your node
+defer srv.Close()
+seedFixtures(t)                               // your own write path
+
+m := &manifest.Manifest{
+    BaseURL:  srv.URL,
+    Profiles: []string{manifest.ProfileCore, manifest.ProfileVersioning},
+    Fixtures: map[string]string{ /* role -> your names */ },
+}
+spec, err := openapi.LoadSpec("path/to/openapi.yaml")
+run := suite.New(m, spec, 10*time.Second).Execute()
+if !run.Passed() { /* run.Results carries each failure and its request */ }
+```
+
+The packages are `manifest`, `openapi`, `suite` and `report`. Vendor this repo
+as a git submodule and `replace` it in your `go.mod` to pin the exact suite
+version your build is measured against.
+
+## What the suite refuses to decide
+
+Where the standard is genuinely silent and two designs are both defensible, the
+case tests the property both must satisfy rather than picking a winner.
+
+The clearest example is a revoked record. One design answers 200 with
+`state: revoked` — self-describing, but only to a client that reads `state`,
+and real Beckn clients do not: ONIX's `LookupNode` treats any 200 as a live
+participant, so a revoked subscriber keeps being routed to. The other answers
+404 on the live-binding read and keeps history reachable — every client honours
+that, at the cost of a second call to learn why.
+
+The standard fixes no status code here, so the case asserts only what both
+designs must preserve: that a revoked record stays **distinguishable from one
+that never existed**. Failing an implementation for the other choice would be
+this suite inventing a requirement.
 
 ## Notes on the standard, found by building this
 

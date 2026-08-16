@@ -1,4 +1,4 @@
-package spec
+package openapi
 
 import (
 	"fmt"

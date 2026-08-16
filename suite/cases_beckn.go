@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/theflywheel/dedi-conformance/internal/manifest"
+	"github.com/theflywheel/dedi-conformance/manifest"
 )
 
 // The beckn profile: the standard's Beckn_subscriber reference registry.

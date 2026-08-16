@@ -16,22 +16,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/theflywheel/dedi-conformance/internal/manifest"
-	"github.com/theflywheel/dedi-conformance/internal/report"
-	"github.com/theflywheel/dedi-conformance/internal/spec"
+	"github.com/theflywheel/dedi-conformance/manifest"
+	"github.com/theflywheel/dedi-conformance/openapi"
+	"github.com/theflywheel/dedi-conformance/report"
 )
 
 // Suite holds everything a run needs.
 type Suite struct {
 	M      *manifest.Manifest
-	Spec   *spec.Spec
+	Spec   *openapi.Spec
 	Client *http.Client
 	Run    *report.Run
 }
 
 // New builds a Suite. timeout bounds each individual request: a node that
 // hangs should fail its case, not the whole run.
-func New(m *manifest.Manifest, s *spec.Spec, timeout time.Duration) *Suite {
+func New(m *manifest.Manifest, s *openapi.Spec, timeout time.Duration) *Suite {
 	return &Suite{
 		M:      m,
 		Spec:   s,

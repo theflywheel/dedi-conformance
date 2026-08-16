@@ -39,8 +39,11 @@ const (
 	RejectsSpecEnum Defect = "rejects-spec-enum"
 	// VersionIDIs400 rejects a version_id the published contract permits.
 	VersionIDIs400 Defect = "version-id-400"
-	// RevokedIs404 deletes on revocation instead of recording a state.
-	RevokedIs404 Defect = "revoked-is-404"
+	// RevokedIsErased deletes on revocation instead of recording it: the
+	// record resolves 404 AND its history is gone, leaving nothing to
+	// distinguish it from a record that never existed. Note that 404 on the
+	// live-binding read alone is NOT a defect — see caseRevokedVisible.
+	RevokedIsErased Defect = "revoked-is-erased"
 	// AsOnIgnored accepts as_on and always answers with the current version.
 	AsOnIgnored Defect = "as-on-ignored"
 	// NoErrorCode returns errors as prose with no machine-readable code.
@@ -213,7 +216,7 @@ func (n *node) lookup(w http.ResponseWriter, r *http.Request, p []string) {
 	case Record:
 		n.ok(w, n.record(name, "2", "live"))
 	case RevokedRecord:
-		if n.has(RevokedIs404) {
+		if n.has(RevokedIsErased) {
 			n.fail(w, http.StatusNotFound, "no such record")
 			return
 		}
@@ -273,6 +276,10 @@ func (n *node) versions(w http.ResponseWriter, r *http.Request, p []string) {
 	// reading a shape the standard does not define — pass unnoticed.
 	if len(p) < 3 {
 		n.ok(w, map[string]any{"namespace": Namespace, "total_versions": 1, "versions": []any{"1"}})
+		return
+	}
+	if p[2] == RevokedRecord && n.has(RevokedIsErased) {
+		n.fail(w, http.StatusNotFound, "no such record")
 		return
 	}
 	if p[2] != RecordWithVersions {

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/theflywheel/dedi-conformance/internal/manifest"
+	"github.com/theflywheel/dedi-conformance/manifest"
 )
 
 // The versioning profile.
@@ -184,27 +184,55 @@ func caseAsOnTimeTravel(t *T) {
 	}
 }
 
-// caseRevokedVisible: a revocation must be a state a reader can see, not a
-// deletion. If a revoked record 404s, a relying party cannot tell "this key
-// was revoked" from "this key was never registered" — and those call for
-// opposite responses.
+// caseRevokedVisible: a revocation must remain distinguishable from a record
+// that never existed. Those two facts call for opposite decisions — one is a
+// known counterparty whose key is now untrusted, the other is a stranger — and
+// a directory that cannot tell them apart has lost the point of recording the
+// revocation.
+//
+// What this case deliberately does NOT assert is the status code, because the
+// standard does not fix one and there are two defensible designs:
+//
+//   - 200 with state: revoked — self-describing, but only to a client that
+//     reads `state`. Real Beckn clients do not: ONIX's LookupNode treats any
+//     200 as a live participant, so a revoked subscriber keeps being routed to.
+//   - 404 on the live-binding read, with history still reachable — withdraws
+//     the binding in a way every client honours, at the cost of needing a
+//     second call to learn why.
+//
+// Both keep revocation visible; they disagree about which failure is worse.
+// Requiring either one would fail a conformant implementation for making the
+// other choice, so this case tests the property both must satisfy.
 func caseRevokedVisible(t *T) {
 	t.SpecRef("components.schemas.Record.state — enum includes 'revoked'")
 	r := t.GET(recordPath(t, manifest.RevokedRecord), nil)
-	if r.Status == 404 {
-		t.Fatalf("the revoked record is 404\n" +
-			"a revocation that removes the record is indistinguishable from a record that never " +
-			"existed, and those two facts call for opposite decisions by a relying party")
-	}
-	t.wantStatus(r, 200)
 
-	obj, ok := mustObject(t, r)
-	if !ok {
+	if r.Status == 200 {
+		obj, ok := mustObject(t, r)
+		if !ok {
+			return
+		}
+		if state, _ := obj["state"].(string); state != "revoked" {
+			t.Errorf("the record named by revoked_record resolves with state %q, want \"revoked\"\n"+
+				"answering a live-binding read without saying the record is revoked is the one "+
+				"outcome revocation exists to prevent", state)
+		}
 		return
 	}
-	state, _ := obj["state"].(string)
-	if state != "revoked" {
-		t.Errorf("the record named by revoked_record reports state %q, want \"revoked\"", state)
+
+	// The binding was withdrawn. That is allowed — but only if the revocation
+	// is still discoverable, or it is indistinguishable from never existing.
+	hist := t.GET(versionsPath(t, manifest.RevokedRecord), nil)
+	if hist.Status != 200 {
+		t.Errorf("the revoked record does not resolve (%d) and its history is not reachable either (%d)\n"+
+			"nothing distinguishes this from a record that was never registered, so a relying party "+
+			"cannot tell an untrusted former counterparty from a stranger",
+			r.Status, hist.Status)
+		return
+	}
+	if len(versionList(t, hist)) == 0 {
+		t.Errorf("the revoked record's history is reachable but empty, so the revocation is not " +
+			"actually recorded anywhere a reader can find it")
 	}
 }
 
