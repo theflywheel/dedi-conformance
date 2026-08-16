@@ -5,7 +5,7 @@ Point it at any DeDi implementation and it reports what that implementation
 conforms to, and what it does not.
 
 ```sh
-docker run --rm -v "$PWD:/work" flywheelai/dedi-conformance:v0.1.0 \
+docker run --rm -v "$PWD:/work" flywheelai/dedi-conformance:v0.0.1 \
   --manifest /work/dedi-conformance.json
 ```
 
