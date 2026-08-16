@@ -7,31 +7,42 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    # Skip rather than fail where the registry credentials are absent — a fork
+    # should not show a red build for lacking secrets it was never going to
+    # have.
+    if: github.repository == 'theflywheel/dedi-conformance'
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive   # the image embeds the pinned spec
+
+      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
+
       - uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/theflywheel/dedi-conformance
+          images: flywheelai/dedi-conformance
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
-            type=sha
+            type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
+
       - uses: docker/build-push-action@v6
         with:
           context: .
+          # Multi-arch on purpose: the maintainers build on arm64 and most
+          # consumers run amd64, so a single-arch push works for whoever
+          # published it and fails for everyone else.
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -5,9 +5,13 @@ Point it at any DeDi implementation and it reports what that implementation
 conforms to, and what it does not.
 
 ```sh
-docker run --rm -v "$PWD:/work" ghcr.io/theflywheel/dedi-conformance \
+docker run --rm -v "$PWD:/work" flywheelai/dedi-conformance \
   --manifest /work/dedi-conformance.json
 ```
+
+Published multi-arch (`linux/amd64`, `linux/arm64`) on Docker Hub. Tagged
+`latest` and by commit, so a conformance claim can name the exact suite that
+produced it.
 
 ```
 DeDi conformance — https://dedi.example.org
