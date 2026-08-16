@@ -1,0 +1,13 @@
+{
+  "base_url": "https://dedi.example.org",
+  "publisher_domain": "example.org",
+  "profiles": ["core", "versioning", "publication", "beckn"],
+  "fixtures": {
+    "namespace": "acme",
+    "registry": "participants",
+    "record": "bap.acme.example",
+    "record_with_versions": "rotated.acme.example",
+    "revoked_record": "gone.acme.example",
+    "absent_namespace": "no-such-namespace-9f3a"
+  }
+}

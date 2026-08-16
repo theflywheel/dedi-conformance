@@ -1,0 +1,4 @@
+[submodule "spec"]
+	path = spec
+	url = https://github.com/LF-Decentralized-Trust-labs/decentralized-directory-protocol.git
+	branch = main
