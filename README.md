@@ -150,8 +150,9 @@ m := &manifest.Manifest{
     Profiles: []string{manifest.ProfileCore, manifest.ProfileVersioning},
     Fixtures: map[string]string{ /* role -> your names */ },
 }
-spec, err := openapi.LoadSpec("path/to/openapi.yaml")
-run := suite.New(m, spec, 10*time.Second).Execute()
+specPath := "path/to/api/openapi.yaml"        // reference schemas resolve from ../schemas
+spec, err := openapi.LoadSpec(specPath)
+run := suite.New(m, spec, specPath, 10*time.Second).Execute()
 if !run.Passed() { /* run.Results carries each failure and its request */ }
 ```
 
